@@ -1,0 +1,106 @@
+version: "3.9"
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: mcp-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: app
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    command:
+      [
+        "mysqld",
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci",
+      ]
+
+  auth-server:
+    build: ./auth-server
+    container_name: mcp-auth-server
+    depends_on:
+      - mysql
+    environment:
+      PORT: 3001
+      DATABASE_URL: mysql://app:app@mysql:3306/app
+      SESSION_SECRET: devsecret
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../:/workspace:cached
+      - node-modules-auth:/workspace/docker/auth-server/node_modules
+    working_dir: /workspace/docker/auth-server
+    command: ["npm", "run", "dev"]
+
+  login-web:
+    build: ./login-web
+    container_name: mcp-login-web
+    environment:
+      PORT: 3000
+      VITE_AUTH_SERVER_ORIGIN: http://localhost:3001
+      VITE_API_SERVER_ORIGIN: http://localhost:3002
+      VITE_FIREBASE_API_KEY: dummy
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../:/workspace:cached
+      - node-modules-login:/workspace/docker/login-web/node_modules
+    working_dir: /workspace/docker/login-web
+    command: ["npm", "run", "dev"]
+
+  api-server:
+    build: ./api-server
+    container_name: mcp-api-server
+    depends_on:
+      - mysql
+    environment:
+      PORT: 3002
+      DATABASE_URL: mysql://app:app@mysql:3306/app
+    ports:
+      - "3002:3002"
+    volumes:
+      - ../:/workspace:cached
+      - node-modules-api:/workspace/docker/api-server/node_modules
+    working_dir: /workspace/docker/api-server
+    command: ["npm", "run", "dev"]
+
+  mcp-server:
+    build: ./mcp-server
+    container_name: mcp-mcp-server
+    depends_on:
+      - auth-server
+      - api-server
+    environment:
+      PORT: 3003
+      AUTH_SERVER_ORIGIN: http://auth-server:3001
+      API_SERVER_ORIGIN: http://api-server:3002
+    ports:
+      - "3003:3003"
+    volumes:
+      - ../:/workspace:cached
+      - node-modules-mcp:/workspace/docker/mcp-server/node_modules
+    working_dir: /workspace/docker/mcp-server
+    command: ["npm", "run", "dev"]
+
+  dev:
+    image: mcr.microsoft.com/devcontainers/base:bookworm
+    container_name: mcp-dev
+    depends_on:
+      - mysql
+    volumes:
+      - ../:/workspace:cached
+    working_dir: /workspace
+    tty: true
+
+volumes:
+  mysql-data:
+  node-modules-auth:
+  node-modules-login:
+  node-modules-api:
+  node-modules-mcp:

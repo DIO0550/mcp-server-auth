@@ -13,7 +13,7 @@
 
 VS Code の Dev Container 内では `mysql`, 各 Node サービスにホストからアクセス可能:
 
-- Login Web: http://localhost:3000
+- Login Web: http://localhost:5173
 - Auth Server: http://localhost:3001
 - API Server: http://localhost:3002
 - MCP Server: http://localhost:3003

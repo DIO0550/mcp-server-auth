@@ -1,0 +1,40 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "github_token",
+      "description": "GitHub Personal Access Token",
+      "password": true
+    }
+  ],
+  "servers": {
+    "github": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=\"$GITHUB_PERSONAL_ACCESS_TOKEN\" ghcr.io/github/github-mcp-server"
+      ]
+    },
+    "github-mcp": {
+      "command": "/usr/local/bin/github-mcp-server",
+      "args": ["stdio"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${input:github_token}"
+      }
+    },
+    "streamable-http-server": {
+      "type": "http",
+      "url": "http://localhost:3003/mcp"
+    },
+    "prompt-mcp-server": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "prompt-mcp-server",
+        "node",
+        "/workspace/McpServer/dist/server.js"
+      ]
+    }
+  }
+}

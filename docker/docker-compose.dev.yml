@@ -42,12 +42,11 @@ services:
     build: ./login-web
     container_name: mcp-login-web
     environment:
-      PORT: 3000
       VITE_AUTH_SERVER_ORIGIN: http://localhost:3001
       VITE_API_SERVER_ORIGIN: http://localhost:3002
       VITE_FIREBASE_API_KEY: dummy
     ports:
-      - "3000:3000"
+      - "5173:5173"
     volumes:
       - ../:/workspace:cached
       - node-modules-login:/workspace/docker/login-web/node_modules
